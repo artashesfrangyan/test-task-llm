@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fetch from 'node-fetch';
+import https from 'https';
 
-if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '0') {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-}
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
 const GIGACHAT_CREDENTIALS = process.env.GIGACHAT_CREDENTIALS || 'MDE5ZDY4ZTctMGZhMy03YjM5LWE3NDgtNzdhYzM4NjVkZjE3OjUxNDc1YmRiLWU5NmUtNGRjYi04ZDAwLWQ5NWM5NmQzNzg5Ng==';
 
@@ -23,7 +23,8 @@ async function getGigaChatToken() {
         'Accept': 'application/json',
         'RqUID': crypto.randomUUID(),
       },
-      body: new URLSearchParams({ scope: 'GIGACHAT_API_PERS' })
+      body: new URLSearchParams({ scope: 'GIGACHAT_API_PERS' }).toString(),
+      agent: httpsAgent,
     });
 
     if (!response.ok) {
@@ -31,7 +32,7 @@ async function getGigaChatToken() {
       return null;
     }
 
-    const data = await response.json();
+    const data = await response.json() as { access_token: string; expires_at: number };
     gigaChatAccessToken = data.access_token;
     tokenExpiry = Date.now() + (data.expires_at - Math.floor(Date.now() / 1000) - 60) * 1000;
     return gigaChatAccessToken;
@@ -64,6 +65,7 @@ async function callLLM(system: string, prompt: string) {
         temperature: 0.7,
         max_tokens: 1024,
       }),
+      agent: httpsAgent,
     });
 
     if (!response.ok) {
@@ -71,7 +73,7 @@ async function callLLM(system: string, prompt: string) {
       return null;
     }
 
-    const data = await response.json();
+    const data = await response.json() as { choices: Array<{ message: { content: string } }> };
     return data.choices[0]?.message?.content || '';
   } catch (error) {
     console.error('LLM error:', error);
