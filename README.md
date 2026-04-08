@@ -86,6 +86,13 @@ npm start
 3. Уведомления
 4. PWA
 5. Темная тема
+6. Экспорт/импорт задач (JSON, CSV)
+7. Теги и категории для задач
+8. История изменений задач
+9. Комментарии к задачам
+10. Реализовать drag-and-drop для kanban-доски (пример из другого моего проекта https://artashesfrangyan.github.io/project-management-system/board/5)
+11. Настроить CI/CD
+12. Перейти на схему offline-first (как здесь https://artashesfrangyan.github.io/project-management-system/board/5), добавив синхронизацию между локальной БД и облачной
 
 ## Технологии
 

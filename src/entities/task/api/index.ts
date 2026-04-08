@@ -24,6 +24,7 @@ export async function createTask(data: CreateTaskData): Promise<Task> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+  if (!res.ok) throw new Error('Failed to create task');
   return res.json();
 }
 
@@ -33,14 +34,17 @@ export async function updateTask(id: number, data: UpdateTaskData): Promise<Task
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+  if (!res.ok) throw new Error('Failed to update task');
   return res.json();
 }
 
 export async function deleteTask(id: number): Promise<void> {
-  await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+  const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete task');
 }
 
 export async function getTask(id: number): Promise<Task> {
   const res = await fetch(`/api/tasks/${id}`);
+  if (!res.ok) throw new Error('Failed to get task');
   return res.json();
 }
