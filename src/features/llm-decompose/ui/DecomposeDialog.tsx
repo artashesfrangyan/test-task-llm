@@ -45,7 +45,7 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
         });
         const data = await res.json();
         
-        if (data.error && data.fallback) {
+        if (!res.ok && data.fallback) {
           setSubtasks(data.fallback.subtasks);
           setSelected(data.fallback.subtasks.map(() => true));
         } else {

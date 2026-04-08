@@ -212,13 +212,13 @@ export async function POST(request: NextRequest) {
   const result = await callLLM(system, prompt);
 
   if (!result) {
-    return NextResponse.json({ error: 'LLM unavailable', fallback: fallback() }, { status: 200 });
+    return NextResponse.json({ error: 'LLM unavailable', fallback: fallback() }, { status: 503 });
   }
 
   try {
     const parsed = JSON.parse(result);
     return NextResponse.json(parsed);
   } catch {
-    return NextResponse.json({ error: 'Parse failed', fallback: fallback() }, { status: 200 });
+    return NextResponse.json({ error: 'Parse failed', fallback: fallback() }, { status: 502 });
   }
 }
