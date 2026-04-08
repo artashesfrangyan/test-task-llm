@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, TextField, Select, MenuItem, FormControl, InputLabel, Stack, Grid, IconButton, Tooltip, CircularProgress
+  Button, TextField, Select, MenuItem, FormControl, InputLabel, Stack, Grid, IconButton, Tooltip, CircularProgress, Chip, Box, Typography
 } from '@mui/material';
 import { Lightbulb as SuggestIcon } from '@mui/icons-material';
 import type { Task, TaskPriority, TaskStatus } from '@/shared/types';
@@ -20,8 +20,17 @@ interface FormData {
   description: string;
   priority: TaskPriority;
   status: TaskStatus;
+  category: string;
   dueDate: string;
 }
+
+const categories = [
+  { value: 'bug', label: 'Баг' },
+  { value: 'feature', label: 'Фича' },
+  { value: 'improvement', label: 'Улучшение' },
+  { value: 'documentation', label: 'Документация' },
+  { value: 'research', label: 'Исследование' },
+];
 
 export function TaskFormDialog({ open, task, onClose, onSave }: TaskFormDialogProps) {
   const [form, setForm] = useState<FormData>({
@@ -29,9 +38,12 @@ export function TaskFormDialog({ open, task, onClose, onSave }: TaskFormDialogPr
     description: '',
     priority: 'medium',
     status: 'pending',
+    category: '',
     dueDate: '',
   });
   const [loadingPriority, setLoadingPriority] = useState(false);
+  const [loadingCategory, setLoadingCategory] = useState(false);
+  const [suggestedCategory, setSuggestedCategory] = useState<{ category: string; confidence: number } | null>(null);
 
   useEffect(() => {
     if (task) {
@@ -40,11 +52,13 @@ export function TaskFormDialog({ open, task, onClose, onSave }: TaskFormDialogPr
         description: task.description || '',
         priority: task.priority,
         status: task.status,
+        category: task.category || '',
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
       });
     } else {
-      setForm({ title: '', description: '', priority: 'medium', status: 'pending', dueDate: '' });
+      setForm({ title: '', description: '', priority: 'medium', status: 'pending', category: '', dueDate: '' });
     }
+    setSuggestedCategory(null);
   }, [task, open]);
 
   const handleSubmit = () => {
@@ -75,6 +89,37 @@ export function TaskFormDialog({ open, task, onClose, onSave }: TaskFormDialogPr
       console.error(e);
     } finally {
       setLoadingPriority(false);
+    }
+  };
+
+  const suggestCategory = async () => {
+    if (!form.title.trim()) return;
+    setLoadingCategory(true);
+    try {
+      const res = await fetch('/api/llm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'categorize',
+          title: form.title,
+          description: form.description,
+        }),
+      });
+      const data = await res.json();
+      if (data.category) {
+        setSuggestedCategory({ category: data.category, confidence: data.confidence || 0.5 });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingCategory(false);
+    }
+  };
+
+  const acceptCategory = () => {
+    if (suggestedCategory) {
+      setForm(prev => ({ ...prev, category: suggestedCategory.category }));
+      setSuggestedCategory(null);
     }
   };
 
@@ -135,6 +180,47 @@ export function TaskFormDialog({ open, task, onClose, onSave }: TaskFormDialogPr
               </FormControl>
             </Grid>
           </Grid>
+          <Box>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+              <FormControl fullWidth>
+                <InputLabel>Категория</InputLabel>
+                <Select
+                  value={form.category}
+                  label="Категория"
+                  onChange={e => setForm({ ...form, category: e.target.value })}
+                  endAdornment={
+                    <Tooltip title="Предложить категорию">
+                      <IconButton size="small" onClick={suggestCategory} disabled={loadingCategory || !form.title.trim()} sx={{ mr: 2 }}>
+                        {loadingCategory ? <CircularProgress size={18} /> : <SuggestIcon fontSize="small" />}
+                      </IconButton>
+                    </Tooltip>
+                  }
+                >
+                  <MenuItem value="">Без категории</MenuItem>
+                  {categories.map(c => (
+                    <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+            {suggestedCategory && (
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Typography variant="caption" color="text.secondary">
+                  AI предлагает:
+                </Typography>
+                <Chip
+                  label={categories.find(c => c.value === suggestedCategory.category)?.label || suggestedCategory.category}
+                  size="small"
+                  color="secondary"
+                  onDelete={() => setSuggestedCategory(null)}
+                  onClick={acceptCategory}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  ({Math.round(suggestedCategory.confidence * 100)}%)
+                </Typography>
+              </Stack>
+            )}
+          </Box>
           <TextField
             label="Срок выполнения"
             type="date"
