@@ -19,6 +19,12 @@ interface DecomposeDialogProps {
   onCreated: () => void;
 }
 
+const priorityLabels: Record<TaskPriority, string> = {
+  low: 'Низкий',
+  medium: 'Средний',
+  high: 'Высокий'
+};
+
 export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDialogProps) {
   const [loading, setLoading] = useState(true);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
@@ -30,6 +36,7 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
 
     const decompose = async () => {
       setLoading(true);
+      setSubtasks([]);
       try {
         const res = await fetch('/api/llm', {
           method: 'POST',
@@ -37,11 +44,7 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
           body: JSON.stringify({ action: 'decompose', title: task.title, description: task.description }),
         });
         const data = await res.json();
-        const tasks = data.subtasks || [
-          { title: `${task.title} - Планирование`, priority: 'high' as TaskPriority },
-          { title: `${task.title} - Реализация`, priority: 'medium' as TaskPriority },
-          { title: `${task.title} - Тестирование`, priority: 'medium' as TaskPriority },
-        ];
+        const tasks = data.subtasks || [];
         setSubtasks(tasks);
         setSelected(tasks.map(() => true));
       } catch {
@@ -97,12 +100,14 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
       <DialogContent>
         {loading ? (
           <CircularProgress />
+        ) : subtasks.length === 0 ? (
+          'Не удалось сгенерировать подзадачи'
         ) : (
           <List>
             {subtasks.map((st, i) => (
               <ListItem key={i} dense onClick={() => toggleSubtask(i)}>
                 <Checkbox checked={selected[i]} />
-                <ListItemText primary={st.title} secondary={`Приоритет: ${st.priority}`} />
+                <ListItemText primary={st.title} secondary={`Приоритет: ${priorityLabels[st.priority] || st.priority}`} />
               </ListItem>
             ))}
           </List>
@@ -113,7 +118,7 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
         <Button
           onClick={handleCreate}
           variant="contained"
-          disabled={creating || !selected.some(Boolean)}
+          disabled={creating || loading || !selected.some(Boolean)}
         >
           {creating ? <CircularProgress size={24} /> : 'Создать выбранные'}
         </Button>
@@ -121,3 +126,6 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
     </Dialog>
   );
 }
+</Content>
+<task_progress>- [x] Исправить приоритет на русском и убрать фликер</task_progress>
+</write_to_file>
