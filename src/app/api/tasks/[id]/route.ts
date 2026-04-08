@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
+import * as Database from 'better-sqlite3';
 import path from 'path';
 
 const dbPath = path.join(process.cwd(), 'tasks.db');
-const db = new Database(dbPath);
+const db = new Database.default(dbPath);
 
 export async function GET(
   request: NextRequest,

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
+import * as Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 
 const dbPath = path.join(process.cwd(), 'tasks.db');
-const db = new Database(dbPath);
+const db = new Database.default(dbPath);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS tasks (
