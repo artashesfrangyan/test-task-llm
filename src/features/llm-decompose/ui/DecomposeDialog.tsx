@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, List, ListItem, ListItemText, Checkbox, CircularProgress
@@ -36,9 +36,16 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [selected, setSelected] = useState<boolean[]>([]);
   const [creating, setCreating] = useState(false);
+  const requestedRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      requestedRef.current = false;
+      return;
+    }
+
+    if (requestedRef.current) return;
+    requestedRef.current = true;
 
     const decompose = async () => {
       setLoading(true);
