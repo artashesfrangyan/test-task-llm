@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, List, ListItem, ListItemText, Checkbox, CircularProgress
@@ -25,58 +25,58 @@ const priorityLabels: Record<TaskPriority, string> = {
   high: 'Высокий'
 };
 
+const defaultSubtasks = (title: string): Subtask[] => [
+  { title: `${title} - Планирование`, priority: 'high' },
+  { title: `${title} - Реализация`, priority: 'medium' },
+  { title: `${title} - Тестирование`, priority: 'medium' },
+];
+
 export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDialogProps) {
   const [loading, setLoading] = useState(true);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [selected, setSelected] = useState<boolean[]>([]);
   const [creating, setCreating] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!open) return;
 
-    abortRef.current?.abort();
-    abortRef.current = new AbortController();
-
     const decompose = async () => {
       setLoading(true);
       setSubtasks([]);
-      try {
-        const res = await fetch('/api/llm', {
+
+      const makeRequest = () =>
+        fetch('/api/llm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'decompose', title: task.title, description: task.description }),
-          signal: abortRef.current?.signal,
-        });
-        const data = await res.json();
-        
-        if (!res.ok && data.fallback) {
-          setSubtasks(data.fallback.subtasks);
-          setSelected(data.fallback.subtasks.map(() => true));
-        } else {
-          const tasks = data.subtasks || [];
-          setSubtasks(tasks);
-          setSelected(tasks.map(() => true));
+        }).then(r => r.json());
+
+      const results = await Promise.allSettled([makeRequest(), makeRequest()]);
+
+      let found: Subtask[] | null = null;
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          const data = r.value;
+          if (data.subtasks && Array.isArray(data.subtasks) && data.subtasks.length > 0) {
+            found = data.subtasks;
+            break;
+          }
         }
-      } catch (e) {
-        if (e instanceof Error && e.name === 'AbortError') return;
-        const defaults: Subtask[] = [
-          { title: `${task.title} - Планирование`, priority: 'high' },
-          { title: `${task.title} - Реализация`, priority: 'medium' },
-          { title: `${task.title} - Тестирование`, priority: 'medium' },
-        ];
-        setSubtasks(defaults);
-        setSelected(defaults.map(() => true));
-      } finally {
-        setLoading(false);
       }
+
+      if (found) {
+        setSubtasks(found);
+        setSelected(found.map(() => true));
+      } else {
+        const fallback = defaultSubtasks(task.title);
+        setSubtasks(fallback);
+        setSelected(fallback.map(() => true));
+      }
+
+      setLoading(false);
     };
 
     decompose();
-
-    return () => {
-      abortRef.current?.abort();
-    };
   }, [task, open]);
 
   const toggleSubtask = (index: number) => {
@@ -121,7 +121,7 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
         ) : (
           <List>
             {subtasks.map((st, i) => (
-              <ListItem key={i}  onClick={() => toggleSubtask(i)}>
+              <ListItem disableGutters key={i}  onClick={() => toggleSubtask(i)}>
                 <Checkbox checked={selected[i]} />
                 <ListItemText primary={st.title} secondary={`Приоритет: ${priorityLabels[st.priority] || st.priority}`} />
               </ListItem>
