@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '0') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const GIGACHAT_CREDENTIALS = process.env.GIGACHAT_CREDENTIALS || 'MDE5ZDY4ZTctMGZhMy03YjM5LWE3NDgtNzdhYzM4NjVkZjE3OjUxNDc1YmRiLWU5NmUtNGRjYi04ZDAwLWQ5NWM5NmQzNzg5Ng==';
 
 let gigaChatAccessToken: string | null = null;
