@@ -8,7 +8,7 @@ import type { Task } from '@/shared/types';
 interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   onDecompose: (task: Task) => void;
 }
 

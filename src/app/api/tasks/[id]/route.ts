@@ -29,7 +29,7 @@ export async function PUT(
 
   const stmt = db.prepare(`
     UPDATE tasks 
-    SET title = ?, description = ?, priority = ?, status = ?, category = ?, dueDate = ?, updatedAt = ?
+    SET title = ?, description = ?, priority = ?, status = ?, category = ?, dueDate = ?
     WHERE id = ?
   `);
 
@@ -40,7 +40,6 @@ export async function PUT(
     body.status,
     body.category || null,
     body.dueDate || null,
-    now,
     id
   );
 

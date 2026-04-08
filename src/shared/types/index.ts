@@ -2,7 +2,7 @@ export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskStatus = 'pending' | 'in_progress' | 'done';
 
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   description?: string;
   priority: TaskPriority;
@@ -10,7 +10,6 @@ export interface Task {
   category?: string;
   dueDate?: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface TaskFilters {

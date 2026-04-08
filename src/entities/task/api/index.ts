@@ -28,7 +28,7 @@ export async function createTask(data: CreateTaskData): Promise<Task> {
   return res.json();
 }
 
-export async function updateTask(id: number, data: UpdateTaskData): Promise<Task> {
+export async function updateTask(id: string, data: UpdateTaskData): Promise<Task> {
   const res = await fetch(`/api/tasks/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -38,12 +38,12 @@ export async function updateTask(id: number, data: UpdateTaskData): Promise<Task
   return res.json();
 }
 
-export async function deleteTask(id: number): Promise<void> {
+export async function deleteTask(id: string): Promise<void> {
   const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete task');
 }
 
-export async function getTask(id: number): Promise<Task> {
+export async function getTask(id: string): Promise<Task> {
   const res = await fetch(`/api/tasks/${id}`);
   if (!res.ok) throw new Error('Failed to get task');
   return res.json();

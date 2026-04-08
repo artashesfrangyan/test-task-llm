@@ -26,6 +26,7 @@
     "uuid": "^10.0.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/better-sqlite3": "^7.6.11",
@@ -34,6 +35,8 @@
     "@types/react-dom": "^19.2.3",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.7.0",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.2",
     "husky": "^9.1.7",
     "jsdom": "^29.0.2",
     "typescript": "~6.0.2",

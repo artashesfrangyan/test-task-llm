@@ -21,7 +21,7 @@ export function TasksBoard() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [decomposeTask, setDecomposeTask] = useState<Task | null>(null);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
 
   useEffect(() => {

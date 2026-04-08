@@ -121,7 +121,7 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
         ) : (
           <List>
             {subtasks.map((st, i) => (
-              <ListItem key={i} dense onClick={() => toggleSubtask(i)}>
+              <ListItem key={i}  onClick={() => toggleSubtask(i)}>
                 <Checkbox checked={selected[i]} />
                 <ListItemText primary={st.title} secondary={`Приоритет: ${priorityLabels[st.priority] || st.priority}`} />
               </ListItem>
