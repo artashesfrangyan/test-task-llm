@@ -1,7 +1,79 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_KEY = process.env.OPENROUTER_API_KEY || 'sk-or-v1-02b95e18d9a3b2d4f6e8a1c3b5d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d';
-const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const GIGACHAT_CREDENTIALS = process.env.GIGACHAT_CREDENTIALS || 'MDE5ZDY4ZTctMGZhMy03YjM5LWE3NDgtNzdhYzM4NjVkZjE3OjUxNDc1YmRiLWU5NmUtNGRjYi04ZDAwLWQ5NWM5NmQzNzg5Ng==';
+
+let gigaChatAccessToken: string | null = null;
+let tokenExpiry = 0;
+
+async function getGigaChatToken() {
+  if (gigaChatAccessToken && Date.now() < tokenExpiry) {
+    return gigaChatAccessToken;
+  }
+
+  try {
+    const response = await fetch('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${GIGACHAT_CREDENTIALS}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'RqUID': crypto.randomUUID(),
+      },
+      body: new URLSearchParams({ scope: 'GIGACHAT_API_PERS' })
+    });
+
+    if (!response.ok) {
+      console.error('OAuth error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    gigaChatAccessToken = data.access_token;
+    tokenExpiry = Date.now() + (data.expires_at - Math.floor(Date.now() / 1000) - 60) * 1000;
+    return gigaChatAccessToken;
+  } catch (error) {
+    console.error('GigaChat OAuth failed:', error);
+    return null;
+  }
+}
+
+async function callLLM(system: string, prompt: string) {
+  try {
+    const token = await getGigaChatToken();
+    if (!token) {
+      return null;
+    }
+
+    const response = await fetch('https://gigachat.devices.sberbank.ru/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'GigaChat',
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('GigaChat API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content || '';
+  } catch (error) {
+    console.error('LLM error:', error);
+    return null;
+  }
+}
 
 const prompts = {
   categorize: {
@@ -65,39 +137,6 @@ const prompts = {
       `Сгенерируй краткую сводку:\nВсего: ${stats.total}, Ожидают: ${stats.pending}, В работе: ${stats.inProgress}, Готово: ${stats.completed}\nВысокий приоритет: ${stats.highPriority}\n\nВерни только JSON.`
   }
 };
-
-async function callLLM(system: string, prompt: string) {
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'http://localhost:3000',
-        'X-Title': 'Task Manager'
-      },
-      body: JSON.stringify({
-        model: 'openai/gigachat:latest',
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 500
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error('LLM API error');
-    }
-
-    const data = await response.json();
-    return data.choices[0]?.message?.content || '';
-  } catch (error) {
-    console.error('LLM error:', error);
-    return null;
-  }
-}
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
