@@ -46,11 +46,3 @@ export const statusColors = {
   in_progress: { bg: '#dbeafe', color: '#1e40af' },
   done: { bg: '#dcfce7', color: '#166534' },
 };
-
-export const categoryColors: Record<string, { bg: string; color: string }> = {
-  bug: { bg: '#fee2e2', color: '#991b1b' },
-  feature: { bg: '#dbeafe', color: '#1e40af' },
-  improvement: { bg: '#d1fae5', color: '#065f46' },
-  documentation: { bg: '#fef3c7', color: '#92400e' },
-  research: { bg: '#e0e7ff', color: '#3730a3' },
-};

@@ -2,19 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  Checkbox,
-  CircularProgress,
-  Typography,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Button, List, ListItem, ListItemText, Checkbox, CircularProgress
 } from '@mui/material';
-import type { Task, TaskPriority } from '@/types';
+import type { Task, TaskPriority } from '@/shared/types';
 
 interface Subtask {
   title: string;
@@ -23,17 +14,20 @@ interface Subtask {
 
 interface DecomposeDialogProps {
   task: Task;
+  open: boolean;
   onClose: () => void;
   onCreated: () => void;
 }
 
-export function DecomposeDialog({ task, onClose, onCreated }: DecomposeDialogProps) {
+export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDialogProps) {
   const [loading, setLoading] = useState(true);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [selected, setSelected] = useState<boolean[]>([]);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
+    if (!open) return;
+
     const decompose = async () => {
       setLoading(true);
       try {
@@ -44,18 +38,17 @@ export function DecomposeDialog({ task, onClose, onCreated }: DecomposeDialogPro
         });
         const data = await res.json();
         const tasks = data.subtasks || [
-          { title: `${task.title} - Планирование`, priority: 'high' },
-          { title: `${task.title} - Реализация`, priority: 'medium' },
-          { title: `${task.title} - Тестирование`, priority: 'medium' },
-        ];
-        setSubtasks(tasks);
-        setSelected(tasks.map(() => true));
-      } catch (e) {
-        console.error(e);
-        const defaults = [
           { title: `${task.title} - Планирование`, priority: 'high' as TaskPriority },
           { title: `${task.title} - Реализация`, priority: 'medium' as TaskPriority },
           { title: `${task.title} - Тестирование`, priority: 'medium' as TaskPriority },
+        ];
+        setSubtasks(tasks);
+        setSelected(tasks.map(() => true));
+      } catch {
+        const defaults: Subtask[] = [
+          { title: `${task.title} - Планирование`, priority: 'high' },
+          { title: `${task.title} - Реализация`, priority: 'medium' },
+          { title: `${task.title} - Тестирование`, priority: 'medium' },
         ];
         setSubtasks(defaults);
         setSelected(defaults.map(() => true));
@@ -63,8 +56,9 @@ export function DecomposeDialog({ task, onClose, onCreated }: DecomposeDialogPro
         setLoading(false);
       }
     };
+
     decompose();
-  }, [task]);
+  }, [task, open]);
 
   const toggleSubtask = (index: number) => {
     setSelected(prev => prev.map((s, i) => (i === index ? !s : s)));
@@ -98,7 +92,7 @@ export function DecomposeDialog({ task, onClose, onCreated }: DecomposeDialogPro
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Декомпозиция: {task.title}</DialogTitle>
       <DialogContent>
         {loading ? (

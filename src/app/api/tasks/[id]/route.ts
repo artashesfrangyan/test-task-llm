@@ -25,10 +25,11 @@ export async function PUT(
 ) {
   const { id } = await params;
   const body = await request.json();
+  const now = new Date().toISOString();
 
   const stmt = db.prepare(`
     UPDATE tasks 
-    SET title = ?, description = ?, priority = ?, status = ?, category = ?, dueDate = ?
+    SET title = ?, description = ?, priority = ?, status = ?, category = ?, dueDate = ?, updatedAt = ?
     WHERE id = ?
   `);
 
@@ -39,6 +40,7 @@ export async function PUT(
     body.status,
     body.category || null,
     body.dueDate || null,
+    now,
     id
   );
 

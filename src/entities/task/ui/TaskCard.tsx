@@ -2,13 +2,13 @@
 
 import { Card, CardContent, CardActions, Typography, Chip, Stack, Divider, IconButton, Tooltip } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, AccountTree as DecomposeIcon, Schedule as ScheduleIcon } from '@mui/icons-material';
-import { priorityColors, statusColors } from '@/theme';
-import type { Task } from '@/types';
+import { priorityColors, statusColors } from '@/shared/lib/theme';
+import type { Task } from '@/shared/types';
 
 interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: number) => void;
   onDecompose: (task: Task) => void;
 }
 

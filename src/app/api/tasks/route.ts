@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as Database from 'better-sqlite3';
-import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 
 const dbPath = path.join(process.cwd(), 'tasks.db');
@@ -8,14 +7,15 @@ const db = new Database.default(dbPath);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS tasks (
-    id TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     description TEXT,
     priority TEXT DEFAULT 'medium',
     status TEXT DEFAULT 'pending',
     category TEXT,
     dueDate TEXT,
-    createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
   )
 `);
 
@@ -51,25 +51,24 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const id = uuidv4();
   const now = new Date().toISOString();
 
   const stmt = db.prepare(`
-    INSERT INTO tasks (id, title, description, priority, status, category, dueDate, createdAt)
+    INSERT INTO tasks (title, description, priority, status, category, dueDate, createdAt, updatedAt)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  stmt.run(
-    id,
+  const result = stmt.run(
     body.title,
     body.description || null,
     body.priority || 'medium',
     body.status || 'pending',
     body.category || null,
     body.dueDate || null,
+    now,
     now
   );
 
-  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
   return NextResponse.json(task);
 }
