@@ -126,6 +126,3 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
     </Dialog>
   );
 }
-</Content>
-<task_progress>- [x] Исправить приоритет на русском и убрать фликер</task_progress>
-</write_to_file>
