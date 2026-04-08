@@ -44,9 +44,15 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
           body: JSON.stringify({ action: 'decompose', title: task.title, description: task.description }),
         });
         const data = await res.json();
-        const tasks = data.subtasks || [];
-        setSubtasks(tasks);
-        setSelected(tasks.map(() => true));
+        
+        if (data.error && data.fallback) {
+          setSubtasks(data.fallback.subtasks);
+          setSelected(data.fallback.subtasks.map(() => true));
+        } else {
+          const tasks = data.subtasks || [];
+          setSubtasks(tasks);
+          setSelected(tasks.map(() => true));
+        }
       } catch {
         const defaults: Subtask[] = [
           { title: `${task.title} - Планирование`, priority: 'high' },

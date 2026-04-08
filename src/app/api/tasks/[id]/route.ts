@@ -6,7 +6,7 @@ const dbPath = path.join(process.cwd(), 'tasks.db');
 const db = new Database.default(dbPath);
 
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
