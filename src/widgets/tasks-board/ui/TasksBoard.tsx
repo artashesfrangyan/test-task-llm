@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Grid, Card, CardContent, Typography, Skeleton, Button, AppBar, Toolbar, IconButton, Tooltip } from '@mui/material';
 import { Add as AddIcon, AutoAwesome as AIIcon } from '@mui/icons-material';
 import { useTasks } from '@/entities/task/model';
@@ -14,6 +14,7 @@ import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import type { Task } from '@/shared/types';
 
 export function TasksBoard() {
+  const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState('all');
   const [priority, setPriority] = useState('all');
   const [search, setSearch] = useState('');
@@ -22,6 +23,10 @@ export function TasksBoard() {
   const [decomposeTask, setDecomposeTask] = useState<Task | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { tasks, loading, refresh } = useTasks(
     status !== 'all' || priority !== 'all' || search ? { status, priority, search } as any : undefined
@@ -48,6 +53,10 @@ export function TasksBoard() {
     setEditingTask(task);
     setFormOpen(true);
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
