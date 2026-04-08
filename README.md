@@ -35,8 +35,10 @@ npm install
 Создайте файл `.env.local` (опционально):
 
 ```env
-OPENROUTER_API_KEY=your_api_key
+GIGACHAT_CREDENTIALS=your_credentials
 ```
+
+По умолчанию используются встроенные демо-credentials.
 
 ## 3. Инструкции запуска приложения
 
@@ -90,4 +92,4 @@ npm start
 - NextJS 16 + TypeScript
 - Material UI
 - SQLite (better-sqlite3)
-- OpenRouter API (GigaChat)
+- GigaChat API (Sber)
