@@ -1,0 +1,2 @@
+npx next lint
+npm run test:run
