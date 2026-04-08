@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, TextField, Select, MenuItem, FormControl, InputLabel, Stack, Grid
+  Button, TextField, Select, MenuItem, FormControl, InputLabel, Stack, Grid, IconButton, Tooltip, CircularProgress
 } from '@mui/material';
+import { Lightbulb as SuggestIcon } from '@mui/icons-material';
 import type { Task, TaskPriority, TaskStatus } from '@/shared/types';
 
 interface TaskFormDialogProps {
@@ -30,6 +31,7 @@ export function TaskFormDialog({ open, task, onClose, onSave }: TaskFormDialogPr
     status: 'pending',
     dueDate: '',
   });
+  const [loadingPriority, setLoadingPriority] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -49,6 +51,31 @@ export function TaskFormDialog({ open, task, onClose, onSave }: TaskFormDialogPr
     if (!form.title.trim()) return;
     onSave(form);
     onClose();
+  };
+
+  const suggestPriority = async () => {
+    if (!form.title.trim()) return;
+    setLoadingPriority(true);
+    try {
+      const res = await fetch('/api/llm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'priority',
+          title: form.title,
+          description: form.description,
+          dueDate: form.dueDate,
+        }),
+      });
+      const data = await res.json();
+      if (data.priority) {
+        setForm(prev => ({ ...prev, priority: data.priority }));
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingPriority(false);
+    }
   };
 
   return (
@@ -79,6 +106,13 @@ export function TaskFormDialog({ open, task, onClose, onSave }: TaskFormDialogPr
                   value={form.priority}
                   label="Приоритет"
                   onChange={e => setForm({ ...form, priority: e.target.value as TaskPriority })}
+                  endAdornment={
+                    <Tooltip title="Предложить приоритет">
+                      <IconButton size="small" onClick={suggestPriority} disabled={loadingPriority || !form.title.trim()} sx={{ mr: 2 }}>
+                        {loadingPriority ? <CircularProgress size={18} /> : <SuggestIcon fontSize="small" />}
+                      </IconButton>
+                    </Tooltip>
+                  }
                 >
                   <MenuItem value="low">Низкий</MenuItem>
                   <MenuItem value="medium">Средний</MenuItem>
