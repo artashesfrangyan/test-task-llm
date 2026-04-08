@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, List, ListItem, ListItemText, Checkbox, CircularProgress
@@ -30,9 +30,13 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [selected, setSelected] = useState<boolean[]>([]);
   const [creating, setCreating] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!open) return;
+
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
 
     const decompose = async () => {
       setLoading(true);
@@ -42,6 +46,7 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'decompose', title: task.title, description: task.description }),
+          signal: abortRef.current?.signal,
         });
         const data = await res.json();
         
@@ -53,7 +58,8 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
           setSubtasks(tasks);
           setSelected(tasks.map(() => true));
         }
-      } catch {
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') return;
         const defaults: Subtask[] = [
           { title: `${task.title} - Планирование`, priority: 'high' },
           { title: `${task.title} - Реализация`, priority: 'medium' },
@@ -67,6 +73,10 @@ export function DecomposeDialog({ task, open, onClose, onCreated }: DecomposeDia
     };
 
     decompose();
+
+    return () => {
+      abortRef.current?.abort();
+    };
   }, [task, open]);
 
   const toggleSubtask = (index: number) => {

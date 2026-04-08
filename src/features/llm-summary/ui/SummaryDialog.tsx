@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, CircularProgress, Typography, Box } from '@mui/material';
 import { AutoAwesome as AIIcon } from '@mui/icons-material';
 
@@ -21,14 +21,18 @@ export function SummaryDialog({ open, onClose }: SummaryDialogProps) {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState('');
   const [stats, setStats] = useState<LLMStats | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!open) return;
 
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+
     const fetchSummary = async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/tasks');
+        const res = await fetch('/api/tasks', { signal: abortRef.current?.signal });
         const tasks = await res.json();
 
         const s: LLMStats = {
@@ -44,10 +48,12 @@ export function SummaryDialog({ open, onClose }: SummaryDialogProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'summary', stats: s }),
+          signal: abortRef.current?.signal,
         });
         const data = await llmRes.json();
         setSummary(data.summary || 'Не удалось сгенерировать сводку');
-      } catch {
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') return;
         setSummary('Ошибка при генерации сводки');
       } finally {
         setLoading(false);
@@ -55,6 +61,10 @@ export function SummaryDialog({ open, onClose }: SummaryDialogProps) {
     };
 
     fetchSummary();
+
+    return () => {
+      abortRef.current?.abort();
+    };
   }, [open]);
 
   return (
